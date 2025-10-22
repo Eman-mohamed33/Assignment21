@@ -17,7 +17,10 @@ import { Model } from "mongoose";
 
 export type lean<T> = FlattenMaps<T>;
 
-export abstract class DatabaseRepository<TDocument> {
+export abstract class DatabaseRepository<
+    TRawDocument,
+    TDocument = HydratedDocument<TRawDocument>,
+> {
     constructor(protected model: Model<TDocument>) { }
 
     async findOne({
@@ -25,7 +28,7 @@ export abstract class DatabaseRepository<TDocument> {
         select,
         options,
     }: {
-        filter: RootFilterQuery<TDocument>;
+        filter: RootFilterQuery<TRawDocument>;
         select?: ProjectionType<TDocument> | null;
         options?: QueryOptions<TDocument> | null;
     }): Promise<lean<TDocument> | TDocument | null> {
@@ -49,7 +52,7 @@ export abstract class DatabaseRepository<TDocument> {
         select,
         options,
     }: {
-        filter: RootFilterQuery<TDocument>;
+        filter: RootFilterQuery<TRawDocument>;
         select?: ProjectionType<TDocument> | undefined;
         options?: QueryOptions<TDocument> | undefined;
     }): Promise<lean<TDocument>[] | TDocument[] | []> {
@@ -117,7 +120,7 @@ export abstract class DatabaseRepository<TDocument> {
         update,
         options,
     }: {
-        filter: RootFilterQuery<TDocument>;
+        filter: RootFilterQuery<TRawDocument>;
         update: UpdateQuery<TDocument>;
         options?: MongooseUpdateQueryOptions<TDocument> | null;
     }): Promise<UpdateWriteOpResult> {
@@ -143,7 +146,7 @@ export abstract class DatabaseRepository<TDocument> {
         update,
         options,
     }: {
-        filter: RootFilterQuery<TDocument>;
+        filter: RootFilterQuery<TRawDocument>;
         update: UpdateQuery<TDocument>;
         options?: MongooseUpdateQueryOptions<TDocument> | null;
     }): Promise<UpdateWriteOpResult> {
@@ -185,7 +188,7 @@ export abstract class DatabaseRepository<TDocument> {
         update = { new: true },
         options,
     }: {
-        filter?: RootFilterQuery<TDocument>;
+        filter?: RootFilterQuery<TRawDocument>;
         update: UpdateQuery<TDocument>;
         options?: QueryOptions<TDocument> | null;
     }): Promise<TDocument | lean<TDocument> | null> {
@@ -199,7 +202,7 @@ export abstract class DatabaseRepository<TDocument> {
     async deleteOne({
         filter,
     }: {
-        filter: RootFilterQuery<TDocument>;
+        filter: RootFilterQuery<TRawDocument>;
     }): Promise<DeleteResult> {
         return await this.model.deleteOne(filter);
     }
@@ -207,7 +210,7 @@ export abstract class DatabaseRepository<TDocument> {
     async deleteMany({
         filter,
     }: {
-        filter: RootFilterQuery<TDocument>;
+        filter: RootFilterQuery<TRawDocument>;
     }): Promise<DeleteResult> {
         return await this.model.deleteMany(filter);
     }
@@ -215,7 +218,7 @@ export abstract class DatabaseRepository<TDocument> {
     async findOneAndDelete({
         filter,
     }: {
-        filter: RootFilterQuery<TDocument>;
+        filter: RootFilterQuery<TRawDocument>;
     }): Promise<TDocument | null> {
         return await this.model.findOneAndDelete(filter);
     }
@@ -227,7 +230,7 @@ export abstract class DatabaseRepository<TDocument> {
         page = 'all',
         size = 5,
     }: {
-        filter: RootFilterQuery<TDocument>;
+        filter: RootFilterQuery<TRawDocument>;
         select?: ProjectionType<TDocument> | undefined;
         options?: QueryOptions<TDocument> | undefined;
         page?: number | 'all';

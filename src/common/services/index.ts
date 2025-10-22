@@ -1,2 +1,2 @@
 export * from './hash.service';
-export * from './otp';
+export * from '../utils/otp';

@@ -7,6 +7,7 @@ import {
   IsString,
   IsStrongPassword,
   Length,
+  Matches,
   maxLength,
   minLength,
   MinLength,
@@ -84,8 +85,7 @@ export class SignupQueryDto {
 
 export class ConfirmEmailBodyDto extends ForgotPasswordBodyDto{
 
-  @Length(1, 6)
-  @IsString()
+  @Matches(/^\d{6}$/)
   otp: string;
 }
 

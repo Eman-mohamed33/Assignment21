@@ -1,7 +1,13 @@
-import { MongooseModule, Prop, Schema, SchemaFactory, Virtual } from "@nestjs/mongoose";
-import { HydratedDocument } from "mongoose";
-import { GenderEnum, generateHash, ProviderEnum, RoleEnum } from "src/common";
-
+import {
+  MongooseModule,
+  Prop,
+  Schema,
+  SchemaFactory,
+  Virtual
+} from "@nestjs/mongoose";
+import { HydratedDocument, Types } from "mongoose";
+import { GenderEnum, generateHash, LanguageEnum, ProviderEnum, RoleEnum } from "src/common";
+import { Otp } from "./otp.model";
 @Schema({
   timestamps: true,
   strictQuery: true,
@@ -63,17 +69,10 @@ export class User {
   confirmEmail: Date;
 
   @Prop({
-    type: String,
-    required: false,
-  })
-  confirmEmailOtp: string;
-
-  @Prop({
     type: Date,
     required: false,
   })
   changeCredentialsTime: Date;
-
   @Prop({
     type: String,
     enum: ProviderEnum,
@@ -99,20 +98,35 @@ export class User {
     type: String,
     required: false,
   })
-  resetPasswordOtp: string
-}
+  resetPasswordOtp: string;
 
+  @Prop([{ type: Types.ObjectId, ref: 'Otp' }])
+  otp?: Otp[];
+
+  @Prop({
+    type: String,
+    enum: LanguageEnum,
+    default: LanguageEnum.EN,
+  })
+  PreferredLanguage: LanguageEnum;
+}
 const userSchema = SchemaFactory.createForClass(User);
+// userSchema.virtual('otp', {
+//   localField: '_id',
+//   foreignField: 'createdBy',
+//   ref: 'Otp',
+//   justOne: false,
+// });
+
+
 export type UserDocument = HydratedDocument<User>;
+
 
 userSchema.pre('save', async function (next) {
   if (this.isModified('password')) {
     this.password = await generateHash(this.password);
   }
 
-  if (this.isModified('confirmEmailOtp') && this.confirmEmailOtp) {
-    this.confirmEmailOtp = await generateHash(this.confirmEmailOtp);
-  }
   next();
 });
 

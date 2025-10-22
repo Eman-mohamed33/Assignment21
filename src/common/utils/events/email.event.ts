@@ -3,16 +3,17 @@ import { log } from 'node:console';
 import Mail from 'nodemailer/lib/mailer';
 import { verifyEmailTemplate } from '../email/verify.template.email';
 import { sendEmail } from '../email/send.email';
+import { OtpEnum } from 'src/common/enums/otp.enum';
 
 export const emailEvent = new EventEmitter();
 interface IEmail extends Mail.Options {
-  otp: number;
+  otp: string;
   userName?: string;
   Content?: string;
   field?: string;
 }
 
-emailEvent.on('confirmEmail', async (data: IEmail) => {
+emailEvent.on(OtpEnum.confirm_email, async (data: IEmail) => {
   try {
     ((data.subject = 'Please Confirm Email...'),
       (data.html = verifyEmailTemplate({

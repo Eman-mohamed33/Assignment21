@@ -11,7 +11,7 @@ import {
   IUser,
   ProviderEnum,
 } from 'src/common';
-import { UserRepository } from 'src/DB';
+import { UserDocument, UserRepository } from 'src/DB';
 import {
   ConfirmEmailBodyDto,
   ForgotPasswordBodyDto,
@@ -22,7 +22,11 @@ import {
 } from './Dto/signup.dto';
 import { emailEvent } from 'src/common/utils/events/email.event';
 import { OAuth2Client, TokenPayload } from 'google-auth-library';
-import { JwtService } from '@nestjs/jwt';
+import { OtpRepository } from 'src/DB/repository/otp.repository';
+import { OtpEnum } from 'src/common/enums/otp.enum';
+import { Types } from 'mongoose';
+import { LoginCredentialsResponse } from 'src/common/entities';
+import { TokenService } from 'src/common/services/token.service';
 
 @Injectable()
 export class AuthenticationService {
@@ -40,9 +44,22 @@ export class AuthenticationService {
     }
     return payload;
   }
+  private async createConfirmEmailOtp(userId: Types.ObjectId) {
+    await this.otpModel.create({
+      data: [
+        {
+          code: String(generateOtp()),
+          createdBy: userId,
+          type: OtpEnum.confirm_email,
+          expiredAt: new Date(Date.now() + 2 * 60 * 1000),
+        },
+      ],
+    });
+  }
   constructor(
     private userModel: UserRepository,
-    private jwtService: JwtService,
+    private tokenService: TokenService,
+    private otpModel: OtpRepository,
   ) {}
 
   async signup(data: SignupBodyDto): Promise<string> {
@@ -54,7 +71,6 @@ export class AuthenticationService {
       throw new ConflictException('User already exist');
     }
 
-    const otpValue = generateOtp();
     const [user] = await this.userModel.create({
       data: [
         {
@@ -62,7 +78,6 @@ export class AuthenticationService {
           password,
           email,
           gender,
-          confirmEmailOtp: String(otpValue),
         },
       ],
     });
@@ -70,24 +85,18 @@ export class AuthenticationService {
       throw new BadRequestException('Fail to signup this account');
     }
 
-    emailEvent.emit('confirmEmail', {
-      to: email,
-      otp: otpValue,
-      userName: username,
-    });
+    await this.createConfirmEmailOtp(user._id);
     return 'Done';
   }
 
-  async login(
-    data: LoginBodyDto,
-  ): Promise<{ access_token: string; refresh_token: string }> {
+  async login(data: LoginBodyDto): Promise<LoginCredentialsResponse> {
     const { email, password } = data;
     const userExist = await this.userModel.findOne({
       filter: { email },
     });
 
     if (!userExist) {
-      throw new NotFoundException('user not found');
+      throw new NotFoundException('fail to find matching account');
     }
 
     if (!userExist.confirmEmail) {
@@ -97,18 +106,31 @@ export class AuthenticationService {
     if (!(await compareHash(password, userExist.password))) {
       throw new BadRequestException('invalid login data');
     }
-    const payload = { _id: userExist._id };
-    const access_token = await this.jwtService.signAsync(payload);
-    const refresh_token = await this.jwtService.signAsync(payload, {
-      secret: process.env.REFRESH_USER_TOKEN_SIGNATURE,
-      expiresIn: Number(process.env.REFRESH_TOKEN_EXPIRES_IN) || 1800,
-    });
-
-    console.log('SECRET in Service:', process.env.ACCESS_USER_TOKEN_SIGNATURE);
-
-    return { access_token, refresh_token };
+    return await this.tokenService.createLoginCredentials(
+      userExist as UserDocument,
+    );
   }
 
+  async resendConfirmEmailOtp(data: ForgotPasswordBodyDto): Promise<string> {
+    const { email } = data;
+    const user = await this.userModel.findOne({
+      filter: { email, confirmEmail: { $exists: false } },
+      options: {
+        populate: [{ path: 'otp', match: { type: OtpEnum.confirm_email } }],
+      },
+    });
+    if (!user) {
+      throw new NotFoundException('fail to find matching result');
+    }
+
+    if (user.otp?.length) {
+      throw new ConflictException(
+        `Sorry we cannot grant you new otp until the existing one become expired please try again after:${user.otp[0].expiredAt}`,
+      );
+    }
+    await this.createConfirmEmailOtp(user._id);
+    return 'Done';
+  }
   async confirmEmail(data: ConfirmEmailBodyDto): Promise<string> {
     const { email, otp } = data;
 
@@ -116,31 +138,23 @@ export class AuthenticationService {
       filter: {
         email,
         confirmEmail: { $exists: false },
-        confirmEmailOtp: { $exists: true },
+      },
+      options: {
+        populate: [{ path: 'otp', match: { type: OtpEnum.confirm_email } }],
       },
     });
     if (!user) {
       throw new NotFoundException('user not exist or already email confirmed');
     }
 
-    if (!(await compareHash(otp, user.confirmEmailOtp))) {
+    if (!(user.otp?.length && (await compareHash(otp, user.otp[0].code)))) {
       throw new BadRequestException('invalid otp');
     }
 
-    const emailConfirmation = await this.userModel.updateOne({
-      filter: {
-        email,
-      },
-      update: {
-        confirmEmail: Date.now(),
-        $unset: { confirmEmailOtp: true },
-      },
-    });
+    user.confirmEmail = new Date();
+    await user.save();
 
-    if (!emailConfirmation) {
-      throw new BadRequestException('fail to confirm your email');
-    }
-
+    await this.otpModel.deleteOne({ filter: { _id: user.otp[0]._id } });
     return 'Done';
   }
 
@@ -252,15 +266,7 @@ export class AuthenticationService {
     if (!user) {
       throw new NotFoundException('User Not Exist');
     }
-
-    const payload = { _id: user._id };
-    const access_token = await this.jwtService.signAsync(payload);
-    const refresh_token = await this.jwtService.signAsync(payload, {
-      secret: process.env.REFRESH_USER_TOKEN_SIGNATURE,
-      expiresIn: Number(process.env.REFRESH_TOKEN_EXPIRES_IN) || 1800,
-    });
-
-    return { access_token, refresh_token };
+    return await this.tokenService.createLoginCredentials(user as UserDocument);
   }
 
   async signupWithGmail(data: gmailValidation): Promise<string> {

@@ -1,10 +1,8 @@
 import {
   Body,
   Controller,
-  Get,
+  Patch,
   Post,
-  Request,
-  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -18,7 +16,7 @@ import {
   ResetPasswordBodyDto,
   SignupBodyDto,
 } from './Dto/signup.dto';
-import { AuthGuard } from './auth.guard';
+import { LoginResponse } from './entities/auth.entity';
 
 UsePipes(
   new ValidationPipe({
@@ -94,6 +92,14 @@ export class AuthenticationController {
     //  throw new HttpException("fail",500);
   }
 
+  @Post('resend-confirm-email')
+  async resendConfirmEmailOtp(
+    @Body()
+    body: ForgotPasswordBodyDto,
+  ): Promise<{ message: string }> {
+    await this.authenticationService.resendConfirmEmailOtp(body);
+    return { message: 'Done' };
+  }
   //@HttpCode(200)
   // @HttpCode(HttpStatus.OK);
 
@@ -101,13 +107,12 @@ export class AuthenticationController {
   async login(
     @Body()
     body: LoginBodyDto,
-  ): Promise<{ access_token: string; refresh_token: string }> {
-    const { access_token, refresh_token } =
-      await this.authenticationService.login(body);
-    return { access_token, refresh_token };
+  ): Promise<LoginResponse> {
+    const credentials = await this.authenticationService.login(body);
+    return { message: 'Done', data: { credentials } };
   }
 
-  @Post('confirm-Email')
+  @Patch('confirm-Email')
   async confirmEmail(
     @Body()
     body: ConfirmEmailBodyDto,
@@ -162,9 +167,9 @@ export class AuthenticationController {
     return { access_token, refresh_token };
   }
 
-  @UseGuards(AuthGuard)
-  @Get('profile')
-  profile(@Request() req) {
-    return {user:req.user};
-  }
+  // @UseGuards(AuthGuard)
+  // @Get('profile')
+  // profile(@Request() req) {
+  //   return { user: req.user };
+  // }
 }

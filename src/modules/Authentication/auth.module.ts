@@ -1,23 +1,13 @@
 import { Module } from '@nestjs/common';
 import { AuthenticationController } from './auth.controller';
 import { AuthenticationService } from './auth.service';
-import { UserModel, UserRepository } from 'src/DB';
-import { JwtModule } from '@nestjs/jwt';
-import { AuthGuard } from './auth.guard';
+import { OtpModel } from 'src/DB';
+import { OtpRepository } from 'src/DB/repository/otp.repository';
 
 @Module({
-  imports: [
-    UserModel,
-    JwtModule.register({
-      global: true,
-      secret: process.env.ACCESS_USER_TOKEN_SIGNATURE || 'hhd',
-      signOptions: {
-        expiresIn: Number(process.env.ACCESS_TOKEN_EXPIRES_IN) || 3600,
-      },
-    }),
-  ],
-  exports: [AuthenticationService],
+  imports: [OtpModel],
   controllers: [AuthenticationController],
-  providers: [AuthenticationService, UserRepository, AuthGuard],
+  providers: [AuthenticationService, OtpRepository],
+  exports: [],
 })
 export class AuthenticationModule {}

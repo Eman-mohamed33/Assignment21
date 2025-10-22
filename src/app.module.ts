@@ -9,6 +9,7 @@ import { UserModule } from './modules/User/user.module';
 import { CategoryModule } from './category/category.module';
 import { ProductModule } from './product/product.module';
 import { MongooseModule } from '@nestjs/mongoose';
+import { SharedAuthenticationModule } from './common/modules/auth.module';
 
 @Module({
   imports: [
@@ -18,12 +19,13 @@ import { MongooseModule } from '@nestjs/mongoose';
     MongooseModule.forRoot(process.env.DB_URI as string, {
       serverSelectionTimeoutMS: 30000,
     }),
+    SharedAuthenticationModule,
     AuthenticationModule,
     UserModule,
     CategoryModule,
     ProductModule,
   ],
-  controllers: [AppController, AuthenticationController],
+  controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}

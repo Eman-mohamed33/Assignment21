@@ -3,7 +3,7 @@ export const verifyEmailTemplate = ({
   userEmail,
   title,
 }: {
-  otp: number;
+  otp: string;
   userEmail: string;
   title: string;
 }): string => {
