@@ -8,7 +8,6 @@ import {
   compareHash,
   generateHash,
   generateOtp,
-  IUser,
   ProviderEnum,
 } from 'src/common';
 import { UserDocument, UserRepository } from 'src/DB';
@@ -30,7 +29,6 @@ import { TokenService } from 'src/common/services/token.service';
 
 @Injectable()
 export class AuthenticationService {
-  private users: IUser[] = [];
   private async verifyGmailAccount(idToken: string): Promise<TokenPayload> {
     const client = new OAuth2Client();
 

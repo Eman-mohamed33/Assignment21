@@ -1,20 +1,21 @@
-import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { AuthenticationController } from './modules/Authentication/auth.controller';
-import { AuthenticationModule } from './modules/Authentication/auth.module';
-import { ConfigModule } from '@nestjs/config';
-import { resolve } from 'path';
-import { UserModule } from './modules/User/user.module';
-import { CategoryModule } from './category/category.module';
-import { ProductModule } from './product/product.module';
-import { MongooseModule } from '@nestjs/mongoose';
-import { SharedAuthenticationModule } from './common/modules/auth.module';
+import { Module } from "@nestjs/common";
+import { AppController } from "./app.controller";
+import { AppService } from "./app.service";
+import { AuthenticationModule } from "./modules/Authentication/auth.module";
+import { ConfigModule } from "@nestjs/config";
+import { resolve } from "path";
+import { UserModule } from "./modules/User/user.module";
+import { MongooseModule } from "@nestjs/mongoose";
+import { SharedAuthenticationModule } from "./common/modules/auth.module";
+import { S3Service } from "./common";
+import { BrandModule } from "./modules/Brand/brand.module";
+import { CategoryModule } from "./modules/Category/category.module";
+import { ProductModule } from "./modules/Product/product.module";
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: resolve('./config/.env.development'),
+      envFilePath: resolve("./config/.env.development"),
     }),
     MongooseModule.forRoot(process.env.DB_URI as string, {
       serverSelectionTimeoutMS: 30000,
@@ -22,10 +23,11 @@ import { SharedAuthenticationModule } from './common/modules/auth.module';
     SharedAuthenticationModule,
     AuthenticationModule,
     UserModule,
+    BrandModule,
     CategoryModule,
     ProductModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, S3Service],
 })
 export class AppModule {}

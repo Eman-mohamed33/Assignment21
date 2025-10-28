@@ -3,11 +3,18 @@ import {
   Prop,
   Schema,
   SchemaFactory,
-  Virtual
+  Virtual,
 } from "@nestjs/mongoose";
 import { HydratedDocument, Types } from "mongoose";
-import { GenderEnum, generateHash, LanguageEnum, ProviderEnum, RoleEnum } from "src/common";
-import { Otp } from "./otp.model";
+import {
+  GenderEnum,
+  generateHash,
+  IUser,
+  LanguageEnum,
+  ProviderEnum,
+  RoleEnum,
+} from "src/common";
+import { Otp, OtpDocument } from "./otp.model";
 @Schema({
   timestamps: true,
   strictQuery: true,
@@ -18,7 +25,7 @@ import { Otp } from "./otp.model";
     virtuals: true,
   },
 })
-export class User {
+export class User implements IUser{
   @Prop({
     type: String,
     minlength: 2,
@@ -101,7 +108,7 @@ export class User {
   resetPasswordOtp: string;
 
   @Prop([{ type: Types.ObjectId, ref: 'Otp' }])
-  otp?: Otp[];
+  otp?: OtpDocument[];
 
   @Prop({
     type: String,
@@ -109,6 +116,9 @@ export class User {
     default: LanguageEnum.EN,
   })
   PreferredLanguage: LanguageEnum;
+
+  @Prop({ type: String })
+  profilePicture: string;
 }
 const userSchema = SchemaFactory.createForClass(User);
 // userSchema.virtual('otp', {
@@ -118,9 +128,7 @@ const userSchema = SchemaFactory.createForClass(User);
 //   justOne: false,
 // });
 
-
 export type UserDocument = HydratedDocument<User>;
-
 
 userSchema.pre('save', async function (next) {
   if (this.isModified('password')) {
@@ -151,4 +159,3 @@ export const UserModel = MongooseModule.forFeature([
 //       },
 //     }
 // ]);
-

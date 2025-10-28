@@ -17,6 +17,8 @@ import {
   SignupBodyDto,
 } from './Dto/signup.dto';
 import { LoginResponse } from './entities/auth.entity';
+import { successResponse } from 'src/common';
+import { IResponse } from 'src/common/interfaces/response.interface';
 
 UsePipes(
   new ValidationPipe({
@@ -34,9 +36,9 @@ export class AuthenticationController {
   async signup(
     @Body()
     body: SignupBodyDto,
-  ): Promise<{ message: string }> {
+  ): Promise<IResponse> {
     await this.authenticationService.signup(body);
-    return { message: 'Done' };
+    return successResponse();
     // console.log(req.params);
     // console.log(req.query);
     //console.log({ req });
@@ -96,9 +98,9 @@ export class AuthenticationController {
   async resendConfirmEmailOtp(
     @Body()
     body: ForgotPasswordBodyDto,
-  ): Promise<{ message: string }> {
+  ): Promise<IResponse> {
     await this.authenticationService.resendConfirmEmailOtp(body);
-    return { message: 'Done' };
+    return successResponse();
   }
   //@HttpCode(200)
   // @HttpCode(HttpStatus.OK);
@@ -107,64 +109,64 @@ export class AuthenticationController {
   async login(
     @Body()
     body: LoginBodyDto,
-  ): Promise<LoginResponse> {
+  ): Promise<IResponse<LoginResponse>> {
     const credentials = await this.authenticationService.login(body);
-    return { message: 'Done', data: { credentials } };
+    return successResponse<LoginResponse>({ data: { credentials } });
   }
 
   @Patch('confirm-Email')
   async confirmEmail(
     @Body()
     body: ConfirmEmailBodyDto,
-  ): Promise<{ message: string }> {
+  ): Promise<IResponse> {
     await this.authenticationService.confirmEmail(body);
-    return { message: 'Done' };
+    return successResponse();
   }
 
   @Post('forgot-password')
   async forgetPassword(
     @Body()
     body: ForgotPasswordBodyDto,
-  ): Promise<string> {
+  ): Promise<IResponse> {
     await this.authenticationService.forgotPassword(body);
-    return `We Sent Your Code To ${body.email} , Please Check Your Email ✅`;
+    return successResponse({ message: `We Sent Your Code To ${body.email} , Please Check Your Email ✅` });
   }
 
   @Post('verify-forgot-password')
   async verifyForgotPasswordCode(
     @Body()
     body: ConfirmEmailBodyDto,
-  ): Promise<string> {
+  ): Promise<IResponse> {
     await this.authenticationService.verifyForgotPasswordCode(body);
-    return 'Done';
+    return successResponse();
   }
 
   @Post('reset-your-password')
   async resetYourPassword(
     @Body()
     body: ResetPasswordBodyDto,
-  ): Promise<string> {
+  ): Promise<IResponse> {
     await this.authenticationService.resetYourPassword(body);
-    return `Your Password is Reset`;
+    return successResponse({ message: `Your Password is Reset` });
   }
 
   @Post('signup-with-gmail')
   async signupWithGmail(
     @Body()
     body: gmailValidation,
-  ): Promise<string> {
+  ): Promise<IResponse> {
     await this.authenticationService.signupWithGmail(body);
-    return 'Done';
+    return successResponse();
   }
 
   @Post('login-with-gmail')
   async loginWithGmail(
     @Body()
     body: gmailValidation,
-  ): Promise<{ access_token: string; refresh_token: string }> {
-    const { access_token, refresh_token } =
+  ): Promise<IResponse<LoginResponse>> {
+    const credentials =
       await this.authenticationService.loginWithGmail(body);
-    return { access_token, refresh_token };
+    return successResponse<LoginResponse>({ data: { credentials } });
   }
 
   // @UseGuards(AuthGuard)

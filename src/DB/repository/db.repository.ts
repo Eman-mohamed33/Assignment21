@@ -191,7 +191,17 @@ export abstract class DatabaseRepository<
         filter?: RootFilterQuery<TRawDocument>;
         update: UpdateQuery<TDocument>;
         options?: QueryOptions<TDocument> | null;
-    }): Promise<TDocument | lean<TDocument> | null> {
+        }): Promise<TDocument | lean<TDocument> | null> {
+         if (Array.isArray(update)) {
+            update.push({
+                $set: {
+                    __v: {
+                        $add: ['$__v', 1],
+                    },
+                },
+            });
+             return await this.model.findOneAndUpdate(filter, update, options);
+        }
         return await this.model.findOneAndUpdate(
             filter,
             { ...update, $inc: { __v: 1 } },
@@ -235,7 +245,15 @@ export abstract class DatabaseRepository<
         options?: QueryOptions<TDocument> | undefined;
         page?: number | 'all';
         size?: number;
-    }): Promise<lean<TDocument>[] | TDocument[] | [] | any> {
+        }): Promise<
+            {
+                docsCount?: number,
+                pages?: number,
+                currentPage?: number | string,
+                limit?: number,
+                result: TDocument[] | [] | lean<TDocument>[],
+        }
+        > {
         let docsCount: number | undefined = undefined;
         let pages: number | undefined = undefined;
 

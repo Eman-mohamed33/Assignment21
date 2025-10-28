@@ -1,16 +1,12 @@
 import { Injectable, Req } from '@nestjs/common';
 import type { Request } from 'express';
-import { IUser } from 'src/common';
+import { S3Service, StorageEnum } from 'src/common';
 import { User } from 'src/common/decorators';
 import type { UserDocument } from 'src/DB';
 
 @Injectable()
 export class UserService {
-  constructor() {}
-
-  getAllUsers(): IUser[] {
-    return [{ id: 10, username: 'em', password: 'hdjh', email: 'gghghhg' }];
-  }
+  constructor(private readonly s3Service:S3Service) {}
 
   profile(
     @Req()
@@ -28,5 +24,18 @@ export class UserService {
   ) {
     console.log({ user });
     return 'Done';
+  }
+
+  async profileImage(
+    file: Express.Multer.File,
+    user: UserDocument,
+  ): Promise<UserDocument> {
+    user.profilePicture = await this.s3Service.uploadFile({
+      file,
+      storageApproach: StorageEnum.disk,
+      path: `user/${user._id.toString()}`,
+    });
+    await user.save();
+    return user;
   }
 }

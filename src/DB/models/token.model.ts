@@ -1,16 +1,17 @@
 import { MongooseModule, Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { HydratedDocument, Types } from "mongoose";
+import { IToken } from "src/common/interfaces/token.interface";
 
 @Schema({ timestamps: true })
-export class Token {
+export class Token implements IToken {
     @Prop({ type: String, required: true, unique: true })
-    jti:string
+    jti: string;
 
     @Prop({ type: Date, required: true })
-    expiredAt:Date
+    expiredAt: Date;
 
     @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-    createdBy: Types.ObjectId
+    createdBy: Types.ObjectId;
 }
 
 export type TokenDocument = HydratedDocument<Token>;
