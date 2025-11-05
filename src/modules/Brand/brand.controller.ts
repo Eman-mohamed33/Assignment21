@@ -1,14 +1,16 @@
 import { Body, Controller, Delete, Get, Param, ParseFilePipe, Patch, Post, Query, UploadedFile, UseInterceptors, UsePipes, ValidationPipe } from "@nestjs/common";
 import { BrandService } from "./brand.service";
 import { Auth, User } from "src/common/decorators";
-import { successResponse } from "src/common";
+import { IBrand, successResponse } from "src/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { CloudFileUpload, fileValidation } from "src/common/utils/multer";
-import { BrandResponse, GetAllResponse } from "./entities/brand.entity";
+import { BrandResponse } from "./entities/brand.entity";
 import { IResponse } from "src/common/interfaces/response.interface";
 import type { UserDocument } from "src/DB";
-import { BrandBodyDto, BrandParamsDto, GetAllDto, UpdateBodyDto } from "./Dto/brand.dto";
+import { BrandBodyDto, BrandParamsDto, UpdateBodyDto } from "./Dto/brand.dto";
 import { BrandEndPoint } from "./brand.authorization";
+import { GetAllDto } from "src/common/dtos";
+import { GetAllResponse } from "src/common/entities";
 
 @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
 @Controller('brand')
@@ -90,18 +92,18 @@ export class BrandController {
     }
 
     @Get()
-    async getAllBrands(@Query() query: GetAllDto): Promise<IResponse<GetAllResponse>> {
-        const brands = await this.brandService.getAll(query);
-        return successResponse<GetAllResponse>({ data: { brands } });
+    async getAllBrands(@Query() query: GetAllDto): Promise<IResponse<GetAllResponse<IBrand>>> {
+        const result = await this.brandService.getAll(query);
+        return successResponse<GetAllResponse<IBrand>>({ data: { result } });
     }
 
     @Auth(BrandEndPoint.create)
     @Get('/archive')
     async getAllArchivedBrands(
         @Query() query: GetAllDto
-    ): Promise<IResponse<GetAllResponse>> {
-        const brands = await this.brandService.getAll(query, true);
-        return successResponse<GetAllResponse>({ data: { brands } });
+    ): Promise<IResponse<GetAllResponse<IBrand>>> {
+        const result = await this.brandService.getAll(query, true);
+        return successResponse<GetAllResponse<IBrand>>({ data: { result } });
     }
 
     @Get(':brandId')

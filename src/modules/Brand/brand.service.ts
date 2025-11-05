@@ -1,10 +1,11 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { BrandRepository } from "src/DB";
 import type { BrandDocument, UserDocument } from "src/DB";
-import { BrandBodyDto, GetAllDto, UpdateBodyDto } from "./Dto/brand.dto";
+import { BrandBodyDto, UpdateBodyDto } from "./Dto/brand.dto";
 import { FolderEnum, S3Service } from "src/common";
 import { Types } from "mongoose";
 import { lean } from "src/DB/repository/db.repository";
+import { GetAllDto } from "src/common/dtos";
 
 @Injectable()
 export class BrandService {
@@ -149,7 +150,10 @@ export class BrandService {
                 ...(archived ? { paranoId: false, deletedAt: { $exists: true } } : {}),
             },
             page,
-            size
+            size,
+            options: {
+                populate: [{ path: "products" }],
+            }
         });
 
         return brands;
@@ -161,6 +165,9 @@ export class BrandService {
                 _id: id,
                 ...(archived ? { paranoId: false, deletedAt: { $exists: true } } : {}),
             },
+            options: {
+                populate: [{ path: "products" }],
+            }
         })
         if (!brand) {
             throw new NotFoundException('fail to find matching result');

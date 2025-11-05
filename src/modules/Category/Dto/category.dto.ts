@@ -1,11 +1,7 @@
 import { PartialType } from "@nestjs/mapped-types";
-import { Type } from "class-transformer";
 import {
   IsMongoId,
-  IsNotEmpty,
-  IsNumber,
   IsOptional,
-  IsPositive,
   IsString,
   MaxLength,
   MinLength,
@@ -58,21 +54,4 @@ export class UpdateCategoryBodyDto extends PartialType(CategoryBodyDto) {
   @Validate(MongoDBIds)
   @IsOptional()
   removeBrand?: Types.ObjectId[];
-}
-
-export class GetAllDtoCategory {
-  @Type(() => Number)
-  @IsPositive()
-  @IsNumber()
-  @IsOptional()
-  page: number;
-  @Type(() => Number)
-  @IsPositive()
-  @IsNumber()
-  @IsOptional()
-  size: number;
-  @IsString()
-  @IsNotEmpty()
-  @IsOptional()
-  search: string;
 }

@@ -2,11 +2,15 @@ import { MongooseModule, Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { HydratedDocument, Types, UpdateQuery } from "mongoose";
 import slugify from "slugify";
 import { ICategory } from "src/common";
+import { BrandModelHooks } from "./brand.model";
+import { ProductModelHooks } from "./product.model";
 
 @Schema({
   timestamps: true,
   strictQuery: true,
   strict: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true },
 })
 export class Category implements ICategory {
   @Prop({ type: String, unique: true, minlength: 2, maxlength: 25, required: true })
@@ -23,7 +27,7 @@ export class Category implements ICategory {
   createdBy: Types.ObjectId;
   @Prop({ type: Types.ObjectId, ref: "User" })
   updatedBy: Types.ObjectId;
-  @Prop([{ type: Types.ObjectId, ref: "Brand" }])
+  @Prop({ type: [{ type: Types.ObjectId, ref: "Brand" }] })
   brands: Types.ObjectId[];
   @Prop({ type: Date })
   deletedAt: Date;
@@ -33,6 +37,11 @@ export class Category implements ICategory {
 export type CategoryDocument = HydratedDocument<Category>;
 const categorySchema = SchemaFactory.createForClass(Category);
 
+categorySchema.virtual("products", {
+  localField: "_id",
+  foreignField: "category",
+  ref: "Product",
+});
 categorySchema.pre("save", function (next) {
   if (this.isModified("name")) {
     this.slug = slugify(this.name);
@@ -64,6 +73,20 @@ categorySchema.pre(["findOneAndUpdate", "updateOne"], function (next) {
   }
   next();
 });
+
+categorySchema.post(
+  ["findOneAndDelete", "deleteOne"],
+  async function (doc: CategoryDocument, next) {
+    const query = this.getQuery();
+    const categoryId = doc?._id || query?._id;
+
+    if (categoryId) {
+      await ProductModelHooks.deleteMany({ category: categoryId });
+      await BrandModelHooks.deleteOne({ category: categoryId });
+    }
+    next();
+  },
+);
 export const CategoryModel = MongooseModule.forFeature([
   {
     name: Category.name,

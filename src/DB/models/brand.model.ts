@@ -1,5 +1,5 @@
 import { MongooseModule, Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { HydratedDocument, Types, UpdateQuery } from "mongoose";
+import { HydratedDocument, model, Types, UpdateQuery } from "mongoose";
 import slugify from "slugify";
 import { IBrand } from "src/common";
 
@@ -26,10 +26,17 @@ export class Brand implements IBrand {
   deletedAt: Date;
   @Prop({ type: Date })
   restoredAt: Date;
+  @Prop({ type: Types.ObjectId, ref: "Category" })
+  category: Types.ObjectId;
 }
 const brandSchema = SchemaFactory.createForClass(Brand);
 export type BrandDocument = HydratedDocument<Brand>;
 
+brandSchema.virtual("products", {
+  localField: "_id",
+  foreignField: "brand",
+  ref: "Product",
+});
 brandSchema.pre("save", function (next) {
   if (this.isModified("name")) {
     this.slug = slugify(this.name);
@@ -61,5 +68,5 @@ brandSchema.pre(["findOneAndUpdate", "updateOne"], function (next) {
   }
   next();
 });
-
+export const BrandModelHooks = model(Brand.name, brandSchema);
 export const BrandModel = MongooseModule.forFeature([{ name: Brand.name, schema: brandSchema }]);

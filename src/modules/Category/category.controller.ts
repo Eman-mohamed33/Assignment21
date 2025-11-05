@@ -5,10 +5,12 @@ import { CloudFileUpload, fileValidation } from "src/common/utils/multer";
 import { Auth, User } from "src/common/decorators";
 import type { UserDocument } from "src/DB";
 import { IResponse } from "src/common/interfaces/response.interface";
-import { successResponse } from "src/common";
+import { ICategory, successResponse } from "src/common";
 import { categoryEndPoint } from "./category.authorization";
-import { CategoryResponse, GetAllCategoriesResponse } from "./entities/category.entity";
-import { CategoryBodyDto, CategoryParamsDto, GetAllDtoCategory, UpdateCategoryBodyDto } from "./Dto/category.dto";
+import { CategoryResponse } from "./entities/category.entity";
+import { CategoryBodyDto, CategoryParamsDto, UpdateCategoryBodyDto } from "./Dto/category.dto";
+import { GetAllDto } from "src/common/dtos";
+import { GetAllResponse } from "src/common/entities";
 
 @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
 @Controller("category")
@@ -91,18 +93,18 @@ export class CategoryController {
   }
   
   @Get()
-  async getAllCategories(@Query() query: GetAllDtoCategory): Promise<IResponse<GetAllCategoriesResponse>> {
-    const categories = await this.categoryService.getAll(query);
-    return successResponse<GetAllCategoriesResponse>({ data: { categories } });
+  async getAllCategories(@Query() query: GetAllDto): Promise<IResponse<GetAllResponse<ICategory>>> {
+    const result = await this.categoryService.getAll(query);
+    return successResponse<GetAllResponse<ICategory>>({ data: { result } });
   }
   
   @Auth(categoryEndPoint.create)
   @Get('/archive')
   async getAllArchivedCategories(
-    @Query() query: GetAllDtoCategory
-  ): Promise<IResponse<GetAllCategoriesResponse>> {
-    const categories = await this.categoryService.getAll(query, true);
-    return successResponse<GetAllCategoriesResponse>({ data: { categories } });
+    @Query() query: GetAllDto
+  ): Promise<IResponse<GetAllResponse<ICategory>>> {
+    const result = await this.categoryService.getAll(query, true);
+    return successResponse<GetAllResponse<ICategory>>({ data: { result } });
   }
   
   @Get(':categoryId')

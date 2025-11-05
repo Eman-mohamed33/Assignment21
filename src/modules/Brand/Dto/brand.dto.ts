@@ -32,20 +32,3 @@ export class BrandParamsDto {
 
 @ContainField()
 export class UpdateBodyDto extends PartialType(BrandBodyDto) {}
-
-export class GetAllDto {
-  @Type(() => Number)
-  @IsPositive()
-  @IsNumber()
-  @IsOptional()
-  page: number;
-  @Type(() => Number)
-  @IsPositive()
-  @IsNumber()
-  @IsOptional()
-  size: number;
-  @IsString()
-  @IsNotEmpty()
-  @IsOptional()
-  search: string;
-}

@@ -14,7 +14,7 @@ import {
   ProviderEnum,
   RoleEnum,
 } from "src/common";
-import { Otp, OtpDocument } from "./otp.model";
+import { OtpDocument } from "./otp.model";
 @Schema({
   timestamps: true,
   strictQuery: true,
@@ -119,6 +119,9 @@ export class User implements IUser{
 
   @Prop({ type: String })
   profilePicture: string;
+
+  @Prop({ type: [{ type: Types.ObjectId, ref: "Product" }] })
+  wishlist?: Types.ObjectId[];
 }
 const userSchema = SchemaFactory.createForClass(User);
 // userSchema.virtual('otp', {

@@ -11,6 +11,9 @@ import { S3Service } from "./common";
 import { BrandModule } from "./modules/Brand/brand.module";
 import { CategoryModule } from "./modules/Category/category.module";
 import { ProductModule } from "./modules/Product/product.module";
+import { CartModule } from "./modules/Cart/cart.module";
+import { OrderModule } from "./modules/Order/order.module";
+import { CouponModule } from "./modules/Coupon/coupon.module";
 
 @Module({
   imports: [
@@ -26,6 +29,9 @@ import { ProductModule } from "./modules/Product/product.module";
     BrandModule,
     CategoryModule,
     ProductModule,
+    CartModule,
+    OrderModule,
+    CouponModule,
   ],
   controllers: [AppController],
   providers: [AppService, S3Service],

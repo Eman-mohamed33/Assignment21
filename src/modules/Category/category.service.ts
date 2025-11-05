@@ -1,10 +1,11 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { BrandRepository, CategoryDocument, CategoryRepository, UserDocument } from "src/DB";
-import { CategoryBodyDto, GetAllDtoCategory, UpdateCategoryBodyDto } from "./Dto/category.dto";
+import { CategoryBodyDto, UpdateCategoryBodyDto } from "./Dto/category.dto";
 import { FolderEnum, S3Service } from "src/common";
 import { randomUUID } from "crypto";
 import { Types } from "mongoose";
 import { lean } from "src/DB/repository/db.repository";
+import { GetAllDto } from "src/common/dtos";
 
 @Injectable()
 export class CategoryService {
@@ -170,7 +171,7 @@ export class CategoryService {
         return 'Done';
     }
     
-    async getAll(query: GetAllDtoCategory, archived: boolean = false): Promise<{
+    async getAll(query: GetAllDto, archived: boolean = false): Promise<{
         docsCount?: number | undefined,
         pages?: number | undefined,
         currentPage?: number | string | undefined,
@@ -190,7 +191,7 @@ export class CategoryService {
                 ...(archived ? { paranoId: false, deletedAt: { $exists: true } } : {}),
             },
             page,
-            size
+            size,
         });
     
         return categories;
@@ -202,7 +203,10 @@ export class CategoryService {
                 _id: id,
                 ...(archived ? { paranoId: false, deletedAt: { $exists: true } } : {}),
             },
-        })
+            options: {
+                populate: [{ path: "products" }],
+            }
+        });
         if (!category) {
             throw new NotFoundException('fail to find matching result');
         }

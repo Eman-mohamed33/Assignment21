@@ -1,31 +1,29 @@
-import { Injectable, Req } from '@nestjs/common';
-import type { Request } from 'express';
+import { Injectable } from '@nestjs/common';
 import { S3Service, StorageEnum } from 'src/common';
-import { User } from 'src/common/decorators';
-import type { UserDocument } from 'src/DB';
+import  { type UserDocument, UserRepository } from 'src/DB';
+import { lean } from 'src/DB/repository/db.repository';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly s3Service:S3Service) {}
+  constructor(
+     private readonly userRepository: UserRepository,
+    private readonly s3Service: S3Service,
+  ) { }
 
-  profile(
-    @Req()
-    req: Request,
-  ) {
-    console.log({
-      lang: req.headers['accept-language'],
-    });
-    return 'Done';
+  async profile(user: UserDocument): Promise<UserDocument | lean<UserDocument>> {
+    return await this.userRepository.findOne({
+      filter: { _id: user._id },
+      options: {
+        populate: [
+          {
+            path:"wishlist"
+          }
+        ]
+      }
+    }) as UserDocument;
   }
 
-  profile22(
-    @User()
-    user: UserDocument,
-  ) {
-    console.log({ user });
-    return 'Done';
-  }
-
+  
   async profileImage(
     file: Express.Multer.File,
     user: UserDocument,

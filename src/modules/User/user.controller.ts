@@ -37,26 +37,15 @@ export class UserController {
   constructor(
     private readonly userService: UserService) { }
 
-  @Get('/profile')
-  profile(
-    @Req()
-    req: Request,
-  ): { message: string } {
-    this.userService.profile(req);
-    return { message: 'Done' };
-  }
 
-  @Auth([RoleEnum.user])
-  @Get('/profile2')
-  @UseInterceptors(PreferredLanguageInterceptor)
-  profile2(
-    @Headers() headers: any,
+  @Auth([RoleEnum.user, RoleEnum.admin, RoleEnum.superAdmin])
+  @Get('/')
+  async profile(
     @User()
     user: UserDocument,
-  ): Observable<any> {
-    this.userService.profile22(user);
-    console.log(headers['accept-language']);
-    return of([{ message: 'Done' }]).pipe(delay(2000));
+  ): Promise<IResponse<ProfileResponse>> {
+    const profile = await this.userService.profile(user);
+    return successResponse<ProfileResponse>({ data: { profile } });
   }
 
   @UseInterceptors(

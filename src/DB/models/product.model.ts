@@ -1,7 +1,26 @@
 import { MongooseModule, Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { HydratedDocument, Types, UpdateQuery } from "mongoose";
+import { HydratedDocument, model, Types, UpdateQuery } from "mongoose";
 import slugify from "slugify";
-import { IProduct } from "src/common";
+import { IProduct, IProductVariance } from "src/common";
+
+@Schema({
+  timestamps: true,
+  strictQuery: true,
+})
+export class ProductVariance implements IProductVariance {
+  @Prop({ type: String, required: false })
+  size: string;
+  @Prop({ type: String })
+  sku: string;
+  @Prop({ type: Number })
+  stock: number;
+  @Prop({ type: String, required: true })
+  color: string;
+  @Prop({ type: Number, required: true })
+  price: number;
+}
+export type ProductVarianceDocument = HydratedDocument<ProductVariance>;
+const productVarianceSchema = SchemaFactory.createForClass(ProductVariance);
 
 @Schema({
   timestamps: true,
@@ -54,6 +73,9 @@ export class Product implements IProduct {
   deletedAt: Date;
   @Prop({ type: Date })
   restoredAt: Date;
+
+  @Prop([productVarianceSchema])
+  productVariance: Partial<ProductVariance>[];
 }
 export type ProductDocument = HydratedDocument<Product>;
 const productSchema = SchemaFactory.createForClass(Product);
@@ -89,6 +111,7 @@ productSchema.pre(["findOneAndUpdate", "updateOne"], function (next) {
   }
   next();
 });
+export const ProductModelHooks = model(Product.name, productSchema);
 
 export const ProductModel = MongooseModule.forFeature([
   {

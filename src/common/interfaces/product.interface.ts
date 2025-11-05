@@ -3,6 +3,16 @@ import { IUser } from "./user.interface";
 import { IBrand } from "./brand.interface";
 import { ICategory } from "./category.interface";
 
+export interface IProductVariance {
+  _id?: Types.ObjectId;
+  createdAt?: Date;
+  updatedAt?: Date;
+  stock?: number;
+  color: string;
+  size?: string;
+  price: number;
+  sku?: string;
+}
 export interface IProduct {
   _id?: Types.ObjectId;
   createdBy: Types.ObjectId | IUser;
@@ -23,4 +33,5 @@ export interface IProduct {
   updatedBy?: Types.ObjectId | IUser;
   deletedAt?: Date;
   restoredAt?: Date;
+  productVariance?: Partial<IProductVariance>[];
 }
