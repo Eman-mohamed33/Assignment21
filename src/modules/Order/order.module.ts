@@ -13,6 +13,8 @@ import { OrderController } from "./order.controller";
 import { OrderService } from "./order.service";
 import { CartService } from "../Cart/cart.service";
 import { PaymentService } from "src/common";
+import { RealtimeGateway } from "../Gateway/gateway";
+import { OrderResolver } from "./order.resolver";
 
 @Module({
   imports: [OrderModel, CartModel, ProductModel, CouponModel],
@@ -25,6 +27,8 @@ import { PaymentService } from "src/common";
     CartService,
     PaymentService,
     CouponRepository,
+    RealtimeGateway,
+    OrderResolver,
   ],
   exports: [],
 })

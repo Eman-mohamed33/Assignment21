@@ -7,6 +7,9 @@ import { Types } from "mongoose";
 import { OrderStatusEnum, PaymentService, PaymentTypeEnum } from "src/common";
 import Stripe from "stripe";
 import { Request } from "express";
+import { RealtimeGateway } from "../Gateway/gateway";
+import { GetAllDto, GetAllGraphQlDto } from "src/common/dtos";
+import { lean } from "src/DB/repository/db.repository";
 
 @Injectable()
 export class OrderService {
@@ -17,7 +20,7 @@ export class OrderService {
         private readonly cartService: CartService,
         private readonly paymentService: PaymentService,
         private readonly couponRepository: CouponRepository,
-
+        private readonly realtimeGateway: RealtimeGateway,
     ) { }
     
     async webhook(req: Request) {
@@ -88,8 +91,11 @@ export class OrderService {
         if (!order) {
             throw new BadRequestException("fail to create new order")
         }
+
+        let stockProducts: { productId: Types.ObjectId, stock: number }[] = [];
+
         for (const product of cart.products) {
-            await this.productRepository.updateOne({
+            const updatedProduct = await this.productRepository.findOneAndUpdate({
                 filter: {
                     _id: product.productId,
                     stock: { $gte: product.quantity },
@@ -97,8 +103,10 @@ export class OrderService {
                 update: {
                     $inc: { stock: -product.quantity, __v: 1 },
                 }
-            });
+            }) as ProductDocument;
+            stockProducts.push({ productId: updatedProduct?._id, stock: updatedProduct?.stock });
         }
+        this.realtimeGateway.changeProductStock(stockProducts);
         await this.cartService.remove(user);
         return order;
 
@@ -215,4 +223,28 @@ export class OrderService {
         await order.save();
         return session;
     }
+
+    async getAll(data: GetAllGraphQlDto = {}, archived: boolean = false): Promise<{
+            docsCount?: number | undefined,
+            pages?: number | undefined,
+            currentPage?: number | string | undefined,
+            limit?: number | undefined,
+            result: OrderDocument[] | [] | lean<OrderDocument>[],
+        }> {
+        const { page, size, search } = data;
+            const orders = await this.orderRepository.paginate({
+                filter: {
+                    ...(archived ? { paranoId: false, deletedAt: { $exists: true } } : {}),
+                },
+                page,
+                size,
+                options: {
+                    populate: [{
+                        path:"createdBy"
+                    }],
+                }
+            });
+        
+            return orders;
+        }
 }

@@ -1,0 +1,124 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type OneUserResponse {
+  _id: ID!
+  wishlist: [ID!]
+  firstName: String!
+  lastName: String!
+  username: String
+  email: String!
+  password: String
+  resetPasswordOtp: String
+  profilePicture: String!
+  confirmEmail: DateTime
+  changeCredentialsTime: DateTime
+  createdAt: DateTime
+  updatedAt: DateTime
+  provider: ProviderEnum!
+  gender: GenderEnum!
+  role: RoleEnum!
+  PreferredLanguage: LanguageEnum!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+enum ProviderEnum {
+  google
+  system
+}
+
+enum GenderEnum {
+  male
+  female
+}
+
+enum RoleEnum {
+  user
+  admin
+  superAdmin
+}
+
+enum LanguageEnum {
+  AR
+  EN
+  FR
+}
+
+type OneOrderProductResponse {
+  _id: ID!
+  productId: ID!
+  createdAt: DateTime
+  updatedAt: DateTime
+  name: String!
+  quantity: Float!
+  unitPrice: Float!
+  finalPrice: Float!
+}
+
+"""one order response"""
+type OneOrderResponse {
+  cancelReason: String
+  note: String
+  intentId: String
+  orderId: String!
+  address: String!
+  phone: String!
+  coupon: ID
+  createdBy: OneUserResponse!
+  _id: ID!
+  updatedBy: ID
+  createdAt: DateTime
+  updatedAt: DateTime
+  deletedAt: DateTime
+  paidAt: DateTime
+  restoredAt: DateTime
+  products: [OneOrderProductResponse!]!
+  status: OrderStatusEnum!
+  paymentType: PaymentTypeEnum!
+  subtotal: Float!
+  total: Float!
+  discount: Float
+}
+
+enum OrderStatusEnum {
+  Placed
+  Delivered
+  OnWay
+  Canceled
+  Pending
+}
+
+enum PaymentTypeEnum {
+  Cash
+  Card
+}
+
+"""get all orders"""
+type GetAllOrdersResponse {
+  docsCount: Float
+  pages: Float
+  currentPage: Float
+  limit: Float
+  result: [OneOrderResponse!]!
+}
+
+type Query {
+  getAllOrders(data: GetAllGraphQlDto): GetAllOrdersResponse!
+  sayHello: String!
+}
+
+input GetAllGraphQlDto {
+  page: Float!
+  size: Float!
+  search: String!
+}
+
+type Mutation {
+  """update this order ✔️"""
+  updateOrder: String!
+}

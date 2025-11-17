@@ -1,8 +1,8 @@
-import { Body, Controller, Delete, Get, Param, ParseFilePipe, Patch, Post, Query, UploadedFiles, UseInterceptors, UsePipes, ValidationPipe } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Inject, Param, ParseFilePipe, Patch, Post, Query, UploadedFiles, UseInterceptors, UsePipes, ValidationPipe } from "@nestjs/common";
 import { ProductService } from "./product.service";
 import { FilesInterceptor } from "@nestjs/platform-express";
 import { CloudFileUpload, fileValidation } from "src/common/utils/multer";
-import { Auth, User } from "src/common/decorators";
+import { Auth, TTL, User } from "src/common/decorators";
 import { productEndPoint } from "./product.authorization";
 import type { UserDocument } from "src/DB";
 import { ProductBodyDto, ProductParamDto, UpdateProductAttachmentsBodyDto, UpdateProductBodyDto } from "./Dto/product.dto";
@@ -11,11 +11,32 @@ import { ProductResponse } from "./entities/product.entity";
 import { IResponse } from "src/common/interfaces/response.interface";
 import { GetAllDto } from "src/common/dtos";
 import { GetAllResponse } from "src/common/entities";
+import { Cache, CACHE_MANAGER, CacheInterceptor, CacheTTL } from "@nestjs/cache-manager";
+import { RedisClientType } from "redis";
+import { Redis } from "@upstash/redis";
+import { RedisCacheInterceptor } from "src/common/interceptors";
+import { Observable, of } from "rxjs";
 
 @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
 @Controller("product")
 export class ProductController {
-  constructor(private readonly productService: ProductService) { }
+  constructor(
+    private readonly productService: ProductService,
+    @Inject('REDIS_CLIENT') private readonly redisClient: Redis,
+   // @Inject(CACHE_MANAGER) private cacheManager: Cache
+  ) { }
+
+  // @UseInterceptors(CacheInterceptor)
+  // @CacheTTL(10000)
+  @Get("test")
+  async test() {
+    let user = await this.redisClient.get("user");
+    if (!user) {
+      user = { message: `Done at ${Date.now()}`, name: "EmnMh" };
+      await this.redisClient.set("user",user, { ex: 10 });
+    }
+    return user;
+    }
 
   @UseInterceptors(FilesInterceptor("attachments", 5, CloudFileUpload({
     storageApproach: StorageEnum.disk,
@@ -90,10 +111,13 @@ export class ProductController {
     return successResponse();
   }
     
+
+  @TTL(20)
+  @UseInterceptors(RedisCacheInterceptor)
   @Get()
-  async getAllProducts(@Query() query: GetAllDto): Promise<IResponse<GetAllResponse<IProduct>>> {
+  async getAllProducts(@Query() query: GetAllDto): Promise<Observable<IResponse<GetAllResponse<IProduct>>>> {
     const result = await this.productService.getAll(query);
-    return successResponse<GetAllResponse<IProduct>>({ data: { result } });
+    return of(successResponse<GetAllResponse<IProduct>>({ data: { result } }));
   }
     
   @Auth(productEndPoint.create)

@@ -15,6 +15,7 @@ import {
   RoleEnum,
 } from "src/common";
 import { OtpDocument } from "./otp.model";
+import { md5_base64 } from "node_modules/zod/v4/core/regexes.cjs";
 @Schema({
   timestamps: true,
   strictQuery: true,
@@ -148,6 +149,7 @@ export const UserModel = MongooseModule.forFeature([
     }
 ]);
 
+export const connectedSockets = new Map<string, string[]>();
 // export const UserModel = MongooseModule.forFeatureAsync([
 //     {
 //     name: User.name,

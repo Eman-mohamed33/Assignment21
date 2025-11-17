@@ -7,6 +7,8 @@ import {
 } from 'src/DB';
 import { TokenService } from 'src/common/services/token.service';
 import { JwtService } from '@nestjs/jwt';
+import { createClient } from "redis";
+import { Redis } from '@upstash/redis';
 @Global()
 @Module({
   imports: [UserModel, TokenModel],
@@ -17,6 +19,7 @@ import { JwtService } from '@nestjs/jwt';
     JwtService,
     UserModel,
     TokenModel,
+    "REDIS_CLIENT",
   ],
   controllers: [],
   providers: [
@@ -24,6 +27,18 @@ import { JwtService } from '@nestjs/jwt';
     TokenService,
     TokenRepository,
     JwtService,
-    ],
+    {
+      provide: "REDIS_CLIENT",
+      useFactory: () => {
+        const client = new Redis({
+          url: process.env.UPSTASH_REDIS_URL, // or your VPS URL,
+          token: process.env.UPSTASH_REDIS_TOKEN,
+        });
+        console.log("✅ Redis connected");
+
+        return client;
+      },
+    },
+  ],
 })
-export class SharedAuthenticationModule { };
+export class SharedAuthenticationModule {};
